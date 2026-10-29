@@ -1,0 +1,21 @@
+# Données (non publiées, régénérées par le script)
+data/brut/
+data/sortie/
+
+# Fichiers générés par Python
+__pycache__/
+*.pyc
+
+# Notebooks : fichiers temporaires
+.ipynb_checkpoints/
+
+# Spark : fichiers temporaires
+spark-warehouse/
+metastore_db/
+derby.log
+
+# Paramètres locaux de l'éditeur
+.vscode/
+
+# Métadonnées générées par "pip install -e ."
+*.egg-info/

@@ -1,0 +1,62 @@
+# Paramètres du pipeline de fiabilisation contrats × sinistres
+# Toute valeur utilisée par le code est définie ici, jamais en dur dans src/.
+
+projet:
+  nom: fiabilisation-donnees-auto
+  version: 0.1.0
+
+sources:
+  contrats:
+    openml_id: 41214
+    fichier: data/brut/contrats.csv
+  sinistres:
+    openml_id: 41215
+    fichier: data/brut/sinistres.csv
+
+jointure:
+  cle: IDpol
+  type: left                            # on garde tous les contrats (table de référence) ; sinistres agrégés par IDpol avant la jointure
+
+controles:
+  exposition_min: 0                    # une exposition <= 0 n'est pas normale
+  exposition_max: 1                    # contrat annuel standard ; au-delà, défaut connu du jeu de données freMTPL2
+  tolerance_reconciliation: 0.01       # écart accepté sur les totaux pipeline vs recalcul pandas (1%)
+  niveaux:                             # bloquant ou alerte
+    doublons_contrats: bloquant        # un contrat dupliqué fausse directement les totaux
+    doublons_sinistres: alerte         # ligne de sinistre strictement dupliquée, à investiguer
+    cles_orphelines: alerte            # sinistre sans contrat correspondant : rare, on exclut + journalise
+    coherence_nb_sinistres: alerte     # ClaimNb != nb réel de lignes sinistres : trop fréquent pour bloquer tout le traitement
+    exposition_hors_bornes: alerte     # cf. exposition_min/exposition_max ci-dessus
+
+  veh_age:                              # vérification exploratoire (hors périmètre EF du cahier, ajoutée en exploration)
+    borne_max: 100                       # véhicule particulier assuré de plus de 100 ans : très improbable
+    niveau: alerte
+
+  driv_age:                             # vérification exploratoire (hors périmètre EF du cahier, ajoutée en exploration)
+    borne_min: 18                       # âge légal du permis de conduire en France (0 cas sous ce seuil)
+    borne_max: 200                       # au-delà, rare mais pas impossible 
+    niveau: alerte
+
+  claim_nb:                             # vérification exploratoire (hors périmètre EF du cahier, ajoutée en exploration)
+    borne_min: 0                        # un nombre de sinistres négatif est impossible (une borne haute est peu utile : un contrat peut légitimement accumuler plus de 10 sinistres)
+    niveau: alerte
+
+  claim_amount:                         # vérification exploratoire (hors périmètre EF du cahier, ajoutée en exploration)
+    valeur_suspecte: 0                   # un montant négatif est un cas métier légitime (recours/subrogation) : pas une anomalie
+    niveau: alerte                       # un montant exactement nul est en revanche suspect (sinistre sans coût réel)
+
+  bonus_malus:                          # vérification de plausibilité (hors périmètre EF du cahier, ajoutée en exploration)
+    borne_min: 50                       # plancher légal du coefficient bonus-malus
+    borne_max: 350                      # plafond légal du coefficient bonus-malus
+    pas_palier: 5                       # le CRM évolue par paliers de 5 (-5%/an, +25%/sinistre)
+    age_min_plancher: 25                # en dessous, atteindre le plancher (50) est peu plausible (~13 ans sans sinistre requis)
+    niveaux:
+      hors_bornes: bloquant             # viole une règle légale dure
+      pas_non_standard: alerte          # coefficient plausible mais hors paliers classiques, à investiguer
+      jeune_au_plancher: alerte         # incohérence BonusMalus x DrivAge, à investiguer
+
+sorties:
+  base_fiabilisee: data/sortie/base_fiabilisee.parquet
+  sinistres_orphelins: data/sortie/sinistres_orphelins.parquet  # sinistres sans contrat correspondant, isolés (pas supprimés)
+  journal_anomalies: reports/journal_anomalies.csv     # pour les machines : tests, projets suivants
+  rapport_controle: reports/rapport_controle.html      # pour les humains : reporting [Muse]
