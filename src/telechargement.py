@@ -7,6 +7,7 @@ fichier (`__file__`), jamais du dossier courant du kernel : le résultat est
 donc identique quel que soit l'endroit d'où le code est lancé.
 """
 
+import urllib.request
 from pathlib import Path
 
 import pandas as pd
@@ -39,3 +40,20 @@ def telecharger_sources(parametres: dict | None = None) -> dict[str, pd.DataFram
         table.to_csv(chemin, index=False)
         tables[nom] = table
     return tables
+
+
+def telecharger_reference_geographique(parametres: dict | None = None, nom: str = "regions_geojson") -> Path:
+    """Télécharge un fichier de référence géographique (pas OpenML, pas de
+    cache intégré comme fetch_openml) déclaré dans parametres["references"].
+
+    Idempotent "à la main" : si le fichier existe déjà sur disque, on ne
+    retélécharge pas (pas de dépendance réseau à chaque relance, cf. ENF2
+    reproductibilité < 10 min).
+    """
+    parametres = parametres or charger_parametres()
+    reference = parametres["references"][nom]
+    chemin = RACINE_PROJET / reference["fichier"]
+    if not chemin.exists():
+        chemin.parent.mkdir(parents=True, exist_ok=True)
+        urllib.request.urlretrieve(reference["url"], chemin)
+    return chemin

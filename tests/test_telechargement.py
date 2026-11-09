@@ -17,3 +17,10 @@ def test_parametres_contiennent_les_deux_sources():
     for source in parametres["sources"].values():
         assert "openml_id" in source
         assert "fichier" in source
+
+
+def test_parametres_contiennent_la_reference_geographique():
+    parametres = charger_parametres()
+    reference = parametres["references"]["regions_geojson"]
+    assert "url" in reference
+    assert "fichier" in reference

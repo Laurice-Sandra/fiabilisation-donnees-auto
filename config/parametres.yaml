@@ -13,6 +13,17 @@ sources:
     openml_id: 41215
     fichier: data/brut/sinistres.csv
 
+# Fichiers de référence externes (pas des sources OpenML) : utilisés
+# uniquement par l'analyse descriptive exploratoire (notebooks/analyse_descriptive.ipynb).
+references:
+  regions_geojson:
+    # Anciennes régions françaises (avant redécoupage 2015) : la colonne
+    # Region du dataset (R11, R21...) utilise ces codes, pas les 13 régions
+    # actuelles. Source : repo public gregoiredavid/france-geojson (licence
+    # ouverte Etalab).
+    url: https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/regions-avant-redecoupage-2015.geojson
+    fichier: data/brut/regions_france.geojson
+
 jointure:
   cle: IDpol
   type: left                            # on garde tous les contrats (table de référence) ; sinistres agrégés par IDpol avant la jointure

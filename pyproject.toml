@@ -12,6 +12,16 @@ dependencies = [
     "scikit-learn",
     "pyyaml",
     "pyspark",
+    "plotly",
+    "geopandas",
+]
+
+# Dépendances optionnelles, utilisées uniquement pour l'analyse descriptive
+# exploratoire (notebooks/analyse_descriptive.ipynb), hors périmètre du
+# pipeline officiel : installer avec `pip install -e ".[analyse]"`.
+[project.optional-dependencies]
+analyse = [
+    "seaborn",
 ]
 
 # Déclare le dossier src/ comme le package Python "src".
